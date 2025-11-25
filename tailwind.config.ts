@@ -9,6 +9,10 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+			fontFamily: {
+				heading: ["var(--font-heading)"],
+        text: ["var(--font-text)"],
+			},
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

@@ -2,7 +2,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
+
 }
 
 datasource db {
@@ -11,12 +11,10 @@ datasource db {
 }
 
 model User {
-  // Clerk userId, contoh: "user_2abc..."
   id            String        @id
   email         String?       @unique
   name          String?
   avatar        String?
-  // Clerk handles auth, jadi ini tidak wajib
   passwordHash  String?       @map("password_hash")
 
   createdAt     DateTime      @default(now()) @map("created_at")
@@ -27,7 +25,7 @@ model User {
   cardsCreated  Card[]        @relation("CardCreatedBy")
   comments      Comment[]
   activities    Activity[]
-  sessions      Session[]      // optional dipakai, Clerk tidak isi otomatis
+  sessions      Session[]      
   notifications Notification[]
 
   ownedOrganizations Organization[] @relation("OrganizationOwner")
@@ -39,8 +37,6 @@ model User {
 
 model Organization {
   id          String        @id @default(uuid())
-
-  // supaya sinkron dengan Clerk Organization (orgId)
   clerkOrgId  String        @unique @map("clerk_org_id")
 
   name        String

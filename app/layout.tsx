@@ -40,7 +40,7 @@ export default function RootLayout({
 
       <html lang="en">
         <body
-          className={`${headingFont.variable} ${textFont.variable} antialiased`}
+          className={`${headingFont.variable} ${textFont.variable} antialiased font-text`}
         >
           {children}
         </body>

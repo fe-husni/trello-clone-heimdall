@@ -1,7 +1,10 @@
-import { OrganizationSwitcher } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
+// import { OrganizationSwitcher } from "@clerk/nextjs";
+// import { auth } from "@clerk/nextjs/server";
 
-const OrganizationIdPage = () => {
+import { ensureUserInDb } from "@/lib/ensure-user";
+
+const OrganizationIdPage = async () => {
+  await ensureUserInDb();
   return (
     <div>
       Organization Page!

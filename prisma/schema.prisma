@@ -1,0 +1,277 @@
+// prisma/schema.prisma (SQLite + Clerk-ready)
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  // Clerk userId, contoh: "user_2abc..."
+  id            String        @id
+  email         String?       @unique
+  name          String?
+  avatar        String?
+  // Clerk handles auth, jadi ini tidak wajib
+  passwordHash  String?       @map("password_hash")
+
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  memberships   Membership[]
+  boardMembers  BoardMember[]
+  cardsCreated  Card[]        @relation("CardCreatedBy")
+  comments      Comment[]
+  activities    Activity[]
+  sessions      Session[]      // optional dipakai, Clerk tidak isi otomatis
+  notifications Notification[]
+
+  ownedOrganizations Organization[] @relation("OrganizationOwner")
+  cardAssignees      CardAssignee[]
+  uploads            Attachment[]   @relation("UserUploads")
+
+  @@index([email])
+}
+
+model Organization {
+  id          String        @id @default(uuid())
+
+  // supaya sinkron dengan Clerk Organization (orgId)
+  clerkOrgId  String        @unique @map("clerk_org_id")
+
+  name        String
+  ownerId     String?
+  owner       User?         @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  memberships  Membership[]
+  boards       Board[]
+  labels       Label[]
+  subscription Subscription?
+
+  @@index([name])
+  @@index([clerkOrgId])
+}
+
+model Membership {
+  id              String       @id @default(uuid())
+  userId          String
+  organizationId  String
+  role            String       @default("member")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model Board {
+  id             String        @id @default(uuid())
+  title          String
+  description    String?
+  coverImage     String?       @map("cover_image")
+  organizationId String
+  isPrivate      Boolean       @default(false) @map("is_private")
+
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lists          List[]
+  boardMembers   BoardMember[]
+
+  @@index([organizationId])
+}
+
+model BoardMember {
+  id        String   @id @default(uuid())
+  boardId   String
+  userId    String
+  role      String   @default("member")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, userId])
+  @@index([boardId])
+  @@index([userId])
+}
+
+model List {
+  id        String   @id @default(uuid())
+  title     String
+  position  Float    @default(0)
+  boardId   String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards Card[]
+
+  @@index([boardId, position])
+}
+
+model Card {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  position    Float     @default(0)
+  dueDate     DateTime? @map("due_date")
+  listId      String
+  createdById String?
+  archived    Boolean   @default(false)
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  list       List          @relation(fields: [listId], references: [id], onDelete: Cascade)
+  createdBy  User?         @relation("CardCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  assignees  CardAssignee[]
+  labels     CardLabel[]
+  activities Activity[]
+  comments   Comment[]
+  attachments Attachment[]
+
+  @@index([listId, position])
+  @@index([createdById])
+}
+
+model CardAssignee {
+  id         String   @id @default(uuid())
+  cardId     String
+  userId     String
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, userId])
+  @@index([cardId])
+  @@index([userId])
+}
+
+model Label {
+  id             String    @id @default(uuid())
+  name           String?
+  color          String?
+  organizationId String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  cardLabels    CardLabel[]
+
+  @@index([organizationId])
+}
+
+model CardLabel {
+  id      String @id @default(uuid())
+  cardId  String
+  labelId String
+
+  card  Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, labelId])
+  @@index([cardId])
+  @@index([labelId])
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  cardId     String
+  filename   String?
+  url        String?
+  mimeType   String?  @map("mime_type")
+  size       Int?
+  uploadedBy String?  @map("uploaded_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  card     Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  uploader User? @relation("UserUploads", fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([cardId])
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  cardId    String?
+  userId    String?
+  action    String
+  meta      Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  card Card? @relation(fields: [cardId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([cardId])
+  @@index([userId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  cardId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  card   Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+  @@index([authorId])
+}
+
+model Subscription {
+  id                   String   @id @default(uuid())
+  organizationId       String   @unique
+  stripeCustomerId     String?  @map("stripe_customer_id")
+  stripeSubscriptionId String?  @map("stripe_subscription_id")
+  plan                 String?
+  active               Boolean  @default(false)
+  startedAt            DateTime? @map("started_at")
+  endedAt              DateTime? @map("ended_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String
+  payload     Json?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  deliveredAt DateTime? @map("delivered_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

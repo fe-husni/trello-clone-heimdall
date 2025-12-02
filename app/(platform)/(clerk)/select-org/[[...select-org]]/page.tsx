@@ -1,7 +1,10 @@
 import { OrganizationList } from "@clerk/nextjs";
-import { Organization } from "@clerk/nextjs/server";
+// import { Organization } from "@clerk/nextjs/server";
+import { ensureUserInDb } from "@/lib/ensure-user";
 
-export default function CreateOrganizationPage() {
+export default async function CreateOrganizationPage() {
+
+  await ensureUserInDb();
   return (
     <OrganizationList 
       hidePersonal

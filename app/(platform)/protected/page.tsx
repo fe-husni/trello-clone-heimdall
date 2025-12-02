@@ -7,6 +7,7 @@ const ProtectedPage = () => {
     <div>
       <UserButton 
       afterSwitchSessionUrl="/"/>
+      {/* or use  afterSignOutUrl="/" */}
     </div>
   );
 };

@@ -1,8 +1,5 @@
-// prisma/schema.prisma (SQLite + Clerk-ready)
-
 generator client {
   provider = "prisma-client-js"
-
 }
 
 datasource db {
@@ -11,59 +8,53 @@ datasource db {
 }
 
 model User {
-  id            String        @id
-  email         String?       @unique
-  name          String?
-  avatar        String?
-  passwordHash  String?       @map("password_hash")
-
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-
-  memberships   Membership[]
-  boardMembers  BoardMember[]
-  cardsCreated  Card[]        @relation("CardCreatedBy")
-  comments      Comment[]
-  activities    Activity[]
-  sessions      Session[]      
-  notifications Notification[]
-
-  ownedOrganizations Organization[] @relation("OrganizationOwner")
-  cardAssignees      CardAssignee[]
+  id                 String         @id
+  email              String?        @unique
+  name               String?
+  avatar             String?
+  passwordHash       String?        @map("password_hash")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  activities         Activity[]
   uploads            Attachment[]   @relation("UserUploads")
+  boardMembers       BoardMember[]
+  cardsCreated       Card[]         @relation("CardCreatedBy")
+  cardAssignees      CardAssignee[]
+  comments           Comment[]
+  memberships        Membership[]
+  notifications      Notification[]
+  ownedOrganizations Organization[] @relation("OrganizationOwner")
+  sessions           Session[]
 
   @@index([email])
 }
 
 model Organization {
-  id          String        @id @default(uuid())
-  clerkOrgId  String        @unique @map("clerk_org_id")
-
-  name        String
-  ownerId     String?
-  owner       User?         @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-
-  memberships  Membership[]
+  id           String        @id @default(uuid())
+  clerkOrgId   String        @unique @map("clerk_org_id")
+  name         String
+  ownerId      String?
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
   boards       Board[]
   labels       Label[]
+  memberships  Membership[]
+  owner        User?         @relation("OrganizationOwner", fields: [ownerId], references: [id])
   subscription Subscription?
 
   @@index([name])
   @@index([clerkOrgId])
+  @@index([ownerId], map: "Organization_ownerId_fkey")
 }
 
 model Membership {
-  id              String       @id @default(uuid())
-  userId          String
-  organizationId  String
-  role            String       @default("member")
-  createdAt       DateTime     @default(now()) @map("created_at")
-
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String       @id @default(uuid())
+  userId         String
+  organizationId String
+  role           String       @default("member")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, organizationId])
   @@index([organizationId])
@@ -77,13 +68,11 @@ model Board {
   coverImage     String?       @map("cover_image")
   organizationId String
   isPrivate      Boolean       @default(false) @map("is_private")
-
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
-
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  lists          List[]
   boardMembers   BoardMember[]
+  lists          List[]
 
   @@index([organizationId])
 }
@@ -94,9 +83,8 @@ model BoardMember {
   userId    String
   role      String   @default("member")
   createdAt DateTime @default(now()) @map("created_at")
-
-  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([boardId, userId])
   @@index([boardId])
@@ -108,37 +96,32 @@ model List {
   title     String
   position  Float    @default(0)
   boardId   String
-
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-
-  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  cards Card[]
+  cards     Card[]
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
   @@index([boardId, position])
 }
 
 model Card {
-  id          String    @id @default(uuid())
+  id          String         @id @default(uuid())
   title       String
   description String?
-  position    Float     @default(0)
-  dueDate     DateTime? @map("due_date")
+  position    Float          @default(0)
+  dueDate     DateTime?      @map("due_date")
   listId      String
   createdById String?
-  archived    Boolean   @default(false)
-
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  list       List          @relation(fields: [listId], references: [id], onDelete: Cascade)
-  createdBy  User?         @relation("CardCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-
-  assignees  CardAssignee[]
-  labels     CardLabel[]
-  activities Activity[]
-  comments   Comment[]
+  archived    Boolean        @default(false)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  activities  Activity[]
   attachments Attachment[]
+  createdBy   User?          @relation("CardCreatedBy", fields: [createdById], references: [id])
+  list        List           @relation(fields: [listId], references: [id], onDelete: Cascade)
+  assignees   CardAssignee[]
+  labels      CardLabel[]
+  comments    Comment[]
 
   @@index([listId, position])
   @@index([createdById])
@@ -149,9 +132,8 @@ model CardAssignee {
   cardId     String
   userId     String
   assignedAt DateTime @default(now()) @map("assigned_at")
-
-  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card       Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([cardId, userId])
   @@index([cardId])
@@ -159,14 +141,13 @@ model CardAssignee {
 }
 
 model Label {
-  id             String    @id @default(uuid())
+  id             String        @id @default(uuid())
   name           String?
   color          String?
   organizationId String?
-  createdAt      DateTime  @default(now()) @map("created_at")
-
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  cardLabels    CardLabel[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+  cardLabels     CardLabel[]
+  organization   Organization? @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
 }
@@ -175,9 +156,8 @@ model CardLabel {
   id      String @id @default(uuid())
   cardId  String
   labelId String
-
-  card  Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
-  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  card    Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
 
   @@unique([cardId, labelId])
   @@index([cardId])
@@ -193,11 +173,11 @@ model Attachment {
   size       Int?
   uploadedBy String?  @map("uploaded_by")
   createdAt  DateTime @default(now()) @map("created_at")
-
-  card     Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
-  uploader User? @relation("UserUploads", fields: [uploadedBy], references: [id], onDelete: SetNull)
+  card       Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  uploader   User?    @relation("UserUploads", fields: [uploadedBy], references: [id])
 
   @@index([cardId])
+  @@index([uploadedBy], map: "Attachment_uploaded_by_fkey")
 }
 
 model Activity {
@@ -205,11 +185,10 @@ model Activity {
   cardId    String?
   userId    String?
   action    String
-  meta      Json?
+  meta      String?  @db.LongText
   createdAt DateTime @default(now()) @map("created_at")
-
-  card Card? @relation(fields: [cardId], references: [id], onDelete: SetNull)
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  card      Card?    @relation(fields: [cardId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([cardId])
   @@index([userId])
@@ -222,52 +201,48 @@ model Comment {
   content   String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-
-  card   Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@index([cardId])
   @@index([authorId])
 }
 
 model Subscription {
-  id                   String   @id @default(uuid())
-  organizationId       String   @unique
-  stripeCustomerId     String?  @map("stripe_customer_id")
-  stripeSubscriptionId String?  @map("stripe_subscription_id")
+  id                   String       @id @default(uuid())
+  organizationId       String       @unique
+  stripeCustomerId     String?      @map("stripe_customer_id")
+  stripeSubscriptionId String?      @map("stripe_subscription_id")
   plan                 String?
-  active               Boolean  @default(false)
-  startedAt            DateTime? @map("started_at")
-  endedAt              DateTime? @map("ended_at")
-  createdAt            DateTime  @default(now()) @map("created_at")
-
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  active               Boolean      @default(false)
+  startedAt            DateTime?    @map("started_at")
+  endedAt              DateTime?    @map("ended_at")
+  createdAt            DateTime     @default(now()) @map("created_at")
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
 }
 
 model Notification {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   userId      String
   type        String
-  payload     Json?
-  read        Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at")
+  payload     String?   @db.LongText
+  read        Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at")
   deliveredAt DateTime? @map("delivered_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model Session {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
   token     String
   expiresAt DateTime? @map("expires_at")
   createdAt DateTime  @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

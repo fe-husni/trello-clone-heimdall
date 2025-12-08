@@ -14,6 +14,8 @@ export default clerkMiddleware(async (auth, req) => {
   const pathname = req.nextUrl.pathname;
   const isPublic = isPublicRoute(req);
 
+  // console.log("[MIDDLEWARE] userId:", userId, "orgId:", orgId, "path:", pathname);
+
   // User belum login & route bukan public → paksa ke sign-in
   if (!userId && !isPublic) {
     return redirectToSignIn({ returnBackUrl: req.url });

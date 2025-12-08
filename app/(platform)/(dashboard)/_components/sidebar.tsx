@@ -54,7 +54,15 @@ export const Sidebar = ({
   if (!isLoadedOrg || !isLoadedOrgList || userMemberships.isLoading) {
     return (
       <>
-        <Skeleton />
+        <div className="flex items-center justify-between mb-2">
+          <Skeleton className="h-10 w-[50%]"/>
+          <Skeleton className="h-10 w-10"/>
+        </div>
+        <div className="space-y-2">
+          <NavItem.Skeleton/>
+          <NavItem.Skeleton/>
+          <NavItem.Skeleton/>
+        </div>
       </>
     );
   };
@@ -65,7 +73,7 @@ export const Sidebar = ({
         <span className="pl-4">
           Workspaces
         </span>
-        <Button 
+        <Button
           asChild
           type="button"
           size="icon"
@@ -73,20 +81,20 @@ export const Sidebar = ({
           className="ml-auto"
         >
           <Link href="/select-org">
-            <Plus 
+            <Plus
               className="h-4 w-4"
             />
           </Link>
         </Button>
       </div>
 
-      <Accordion 
+      <Accordion
         type="multiple"
         defaultValue={defaultAccordionValue}
         className="space-y-2"
       >
         {userMemberships.data.map(({ organization }) => (
-          <NavItem 
+          <NavItem
             key={organization.id}
             isActive={activeOrganization?.id === organization.id}
             isExpanded={expanded[organization.id]}

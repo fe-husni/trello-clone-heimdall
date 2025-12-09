@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Accordion } from "@/components/ui/accordion";
 import { NavItem, Organization } from "./nav-item";
+import { useEffect } from "react";
 
 interface SidebarProps {
   storageKey?: string;
@@ -50,6 +51,15 @@ export const Sidebar = ({
       [id]: !expanded[id],
     }));
   }
+
+  // 🔥 Paksa revalidate setiap kali active org berubah
+  useEffect(() => {
+    if (!isLoadedOrgList) return;
+    if (!userMemberships) return;
+
+    // trigger fetch ulang membership list
+    userMemberships.revalidate();
+  }, [activeOrganization?.id, isLoadedOrgList, userMemberships]);
 
   if (!isLoadedOrg || !isLoadedOrgList || userMemberships.isLoading) {
     return (

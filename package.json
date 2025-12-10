@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.35.5",
-    "@prisma/client": "^6.19.0",
     "@radix-ui/react-slot": "^1.2.4",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -23,8 +22,7 @@
     "react": "^18",
     "react-dom": "^18",
     "tailwind-merge": "^3.4.0",
-    "tailwindcss-animate": "^1.0.7",
-    "zod": "^4.1.13"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^20",

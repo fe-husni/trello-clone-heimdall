@@ -3,7 +3,7 @@ import { Info } from "./_components/info";
 import { Separator } from "@/components/ui/separator";
 import { BoardList } from "./_components/board-list";
 
-// export const runtime = "nodejs";
+export const runtime = "nodejs";
 
 
 const OrganizationIdPage = async () => {

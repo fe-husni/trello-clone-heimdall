@@ -16,6 +16,7 @@ import { useAction } from "@/hooks/use-action";
 import { createBoard } from "@/actions/create-board";
 import { toast } from "sonner";
 import { FormPicker } from "./form-picker";
+import { useRouter } from "next/navigation";
 
 interface FormPopoverProps {
   children: React.ReactNode;
@@ -30,12 +31,14 @@ export const FormPopover = ({
   align,
   sideOffset = 0
 }: FormPopoverProps) => {
+  const router = useRouter();
   const closeRef = useRef<ElementRef<"button">>(null);
 
-  const {execute, fieldErrors} = useAction(createBoard, {
+  const { execute, fieldErrors } = useAction(createBoard, {
     onSuccess: (data) => {
       toast.success("Board Created!");
       closeRef.current?.click();
+      router.push(`/board/${data.id}`);
     },
     onError: (error) => {
       toast.error(error);
@@ -48,7 +51,7 @@ export const FormPopover = ({
 
     // console.log({image});
 
-    execute({title, image});
+    execute({ title, image });
   }
 
   return (
@@ -67,7 +70,10 @@ export const FormPopover = ({
         </div>
 
         <PopoverClose asChild>
-          <Button className="h-auto w-auto p-2 absolute top-2 right-2 text-neutral-600" variant="ghost">
+          <Button
+            ref={closeRef}
+            className="h-auto w-auto p-2 absolute top-2 right-2 text-neutral-600"
+            variant="ghost">
             <X className="h-4 w-4"></X>
           </Button>
         </PopoverClose>
@@ -75,7 +81,7 @@ export const FormPopover = ({
         <form action={onSubmit} className="space-y-4">
           <div className="space-y-4">
             <FormPicker id={"image"} errors={fieldErrors}>
-              
+
             </FormPicker>
 
             <FormInput

@@ -7,6 +7,12 @@ import { useEffect, useState } from "react";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { ListItem } from "./list-item";
 import { list } from "postcss";
+import { useAction } from "@/hooks/use-action";
+import { UpdateListOrder } from "@/actions/update-list-order/schema";
+import { updateListOrder } from "@/actions/update-list-order";
+import { toast } from "sonner";
+import { error } from "console";
+import { updateCardOrder } from "@/actions/update-card-order";
 
 interface ListContainerProps {
   data: ListWithCards[];
@@ -26,6 +32,24 @@ export const ListContainer = ({
   boardId,
 }: ListContainerProps) => {
   const [orderedData, setOrderedData] = useState(data);
+
+  const { execute: executeUpdateListOrder } = useAction(updateListOrder, {
+    onSuccess: () => {
+      toast.success("List reordered");
+    },
+    onError: (error) => {
+      toast.error(error);
+    },
+  });
+  
+  const { execute: executeUpdateCardOrder } = useAction(updateCardOrder, {
+    onSuccess: () => {
+      toast.success("Card reordered");
+    },
+    onError: (error) => {
+      toast.error(error);
+    },
+  });
 
   useEffect(() => {
     setOrderedData(data);
@@ -54,7 +78,9 @@ export const ListContainer = ({
       ).map((item, index) => ({ ...item, order: index }));
 
       setOrderedData(items);
+
       // TODO: Trigger for Server Action
+      executeUpdateListOrder({items, boardId});
     }
 
     if (type === "card") {
@@ -72,7 +98,7 @@ export const ListContainer = ({
       if (!sourceList.cards) {
         sourceList.cards = [];
       }
-      
+
       // Check if card exits on the destList
       if (!destList.cards) {
         destList.cards = [];
@@ -93,12 +119,18 @@ export const ListContainer = ({
         sourceList.cards = reorderedCards;
 
         setOrderedData(newOrderedData);
+
         // TODO: Trigger for Server Action
+        setOrderedData(newOrderedData);
+        executeUpdateCardOrder({
+          boardId: boardId,
+          items: reorderedCards,
+        });
 
         // User moves the card to another list
       } else {
         // Remove card from the source list
-        const [movedCard]  = sourceList.cards.splice(source.index, 1);
+        const [movedCard] = sourceList.cards.splice(source.index, 1);
 
         // Assign the new listId to the moved card
         movedCard.listId = destination.droppableId;
@@ -108,14 +140,19 @@ export const ListContainer = ({
 
         sourceList.cards.forEach((card, index) => {
           card.order = index;
-        });
-        
+        }); 
+
         destList.cards.forEach((card, index) => {
           card.order = index;
         });
 
         setOrderedData(newOrderedData);
+
         // TODO Trigger for Server Action
+        executeUpdateCardOrder({
+          boardId: boardId,
+          items: destList.cards,
+        })
       }
     }
   }

@@ -24,7 +24,7 @@ export const CardModal = () => {
       open={isOpen}
       onOpenChange={onClose}
     >
-      <DialogContent>
+      <DialogContent className="max-w-sm md:max-w-3xl">
         {!cardData
           ? <Header.Skeleton />
           : <Header data={cardData} />

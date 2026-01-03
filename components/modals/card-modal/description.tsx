@@ -1,14 +1,12 @@
 "use client";
 
 import { updateCard } from "@/actions/update-card";
-import { FormSubmit } from "@/components/form/form-submit";
-import { FormTextarea } from "@/components/form/form-textarea";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RichTextEditor } from "@/components/editor/rich-text-editor";
 import { useAction } from "@/hooks/use-action";
 import { CardWithList } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
-import { error } from "console";
 import { AlignLeft } from "lucide-react";
 import { useParams } from "next/navigation";
 import { ElementRef, useRef, useState } from "react";
@@ -17,44 +15,56 @@ import { useEventListener, useOnClickOutside } from "usehooks-ts";
 
 interface DescriptionProps {
   data: CardWithList;
-};
+}
 
-export const Description = ({
-  data
-}: DescriptionProps) => {
+export const Description = ({ data }: DescriptionProps) => {
   const params = useParams();
   const queryClient = useQueryClient();
-  const [isEditing, setIsEditing] = useState(false);
 
-  const formRef = useRef<ElementRef<"form">>(null);
-  const textAreaRef = useRef<ElementRef<"textarea">>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [content, setContent] = useState<string>(data.description || "");
+
+  /** 🔥 REF KHUSUS UNTUK EDITOR */
+  const editorWrapperRef = useRef<HTMLDivElement>(null);
 
   const enableEditing = () => {
     setIsEditing(true);
-    setTimeout(() => {
-      textAreaRef.current?.focus();
-    });
-  }
+  };
 
   const disableEditing = () => {
     setIsEditing(false);
+    setContent(data.description || "");
   };
 
-  const onKeyDown = (e: KeyboardEvent) => {
+  /* ===== ESC KEY ===== */
+  useEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       disableEditing();
     }
-  };
+  });
 
-  useEventListener("keydown", onKeyDown);
-  useOnClickOutside(formRef, disableEditing);
+  /* ===== CLICK OUTSIDE (FIX RADIX PORTAL) ===== */
+  useOnClickOutside(editorWrapperRef, (event) => {
+    const target = event.target as Node;
 
-  const { execute, fieldErrors } = useAction(updateCard, {
-    onSuccess: (data) => {
+    // ⛔ Abaikan klik di Radix Dropdown (portal)
+    const radixDropdown = document.querySelector(
+      "[data-radix-popper-content-wrapper]"
+    );
+
+    if (radixDropdown?.contains(target)) {
+      return;
+    }
+
+    disableEditing();
+  });
+
+  const { execute } = useAction(updateCard, {
+    onSuccess: (updated) => {
       queryClient.invalidateQueries({
-        queryKey: ["card", data.id],
+        queryKey: ["card", updated.id],
       });
-      toast.success(`Card "${data.title}" updated`);
+      toast.success(`Card "${updated.title}" updated`);
       disableEditing();
     },
     onError: (error) => {
@@ -62,60 +72,52 @@ export const Description = ({
     },
   });
 
-  const onSubmit = (formData: FormData) => {
-    const description = formData.get("description") as string;
+  const onSubmit = () => {
     const boardId = params.boardId as string;
 
     execute({
       id: data.id,
-      description,
+      description: content, // HTML
       boardId,
-    })
-  }
+    });
+  };
 
   return (
     <div className="flex items-start gap-x-3 w-full">
       <AlignLeft className="h-5 w-5 mt-0.5 text-neutral-700" />
+
       <div className="w-full">
-        <p className="font-semibold text-neutral-700">
-          Description
-        </p>
+        <p className="font-semibold text-neutral-700">Description</p>
+
         {isEditing ? (
-          <form
-          action={onSubmit}
-            ref={formRef}
-            className="space-y-2"
-          >
-            <FormTextarea
-              id="description"
-              className="w-full mt-2"
-              placeholder="Add a more detailed description"
-              defaultValue={data.description || undefined}
-              errors={fieldErrors}
-              ref={textAreaRef}
-            />
+          <div ref={editorWrapperRef} className="mt-2 space-y-2">
+            <RichTextEditor value={content} onChange={setContent} />
+
             <div className="flex items-center gap-x-2">
-              <FormSubmit>
+              <Button type="button" size="sm" onClick={onSubmit}>
                 Save
-              </FormSubmit>
+              </Button>
               <Button
                 type="button"
-                onClick={disableEditing}
                 size="sm"
                 variant="ghost"
+                onClick={disableEditing}
               >
                 Cancel
               </Button>
             </div>
-          </form>
+          </div>
         ) : (
           <div
             onClick={enableEditing}
             role="button"
-            className="min-h-[78px] bg-neutral-200 text-sm font-medium py-3 px-3.5 rounded-md mt-2"
-          >
-            {data.description || "Add a more detailed description..."}
-          </div>
+            className="min-h-[78px]  rounded-md mt-2 prose prose-sm prose-neutral max-w-none"
+            dangerouslySetInnerHTML={{
+              __html:
+                data.description ||
+                "<p>Add a more detailed description...</p>",
+            }}
+          />
         )}
       </div>
     </div>
@@ -128,8 +130,8 @@ Description.Skeleton = function DescriptionSkeleton() {
       <Skeleton className="h-6 w-6 bg-neutral-200" />
       <div className="w-full">
         <Skeleton className="w-24 h-6 mb-2 bg-neutral-200" />
-        <Skeleton className="min-w-max h-[78px] bg-neutral-200" />
+        <Skeleton className="h-[78px] w-full bg-neutral-200" />
       </div>
     </div>
-  )
-}
+  );
+};

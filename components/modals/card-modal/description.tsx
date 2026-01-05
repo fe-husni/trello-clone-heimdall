@@ -9,7 +9,7 @@ import { CardWithList } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlignLeft } from "lucide-react";
 import { useParams } from "next/navigation";
-import { ElementRef, useRef, useState } from "react";
+import { ElementRef, useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useEventListener, useOnClickOutside } from "usehooks-ts";
 
@@ -28,6 +28,7 @@ export const Description = ({ data }: DescriptionProps) => {
   const editorWrapperRef = useRef<HTMLDivElement>(null);
 
   const enableEditing = () => {
+    setContent(data.description || "");
     setIsEditing(true);
   };
 
@@ -35,6 +36,13 @@ export const Description = ({ data }: DescriptionProps) => {
     setIsEditing(false);
     setContent(data.description || "");
   };
+
+  useEffect(() => {
+    if (!isEditing) {
+      setContent(data.description || "");
+    }
+  }, [data.description, isEditing]);
+
 
   /* ===== ESC KEY ===== */
   useEventListener("keydown", (e) => {
@@ -68,7 +76,7 @@ export const Description = ({ data }: DescriptionProps) => {
       queryClient.invalidateQueries({
         queryKey: ["card-logs", data.id]
       });
-      
+
       toast.success(`Card "${updated.title}" updated`);
       disableEditing();
     },

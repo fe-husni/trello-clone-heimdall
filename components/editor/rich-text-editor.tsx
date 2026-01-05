@@ -31,7 +31,7 @@ export const RichTextEditor = ({
   onChange,
 }: RichTextEditorProps) => {
   const editor = useEditor({
-    immediatelyRender: false, 
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: {
@@ -203,19 +203,22 @@ export const RichTextEditor = ({
       </div>
 
       {/* ===== Editor ===== */}
-      <EditorContent
-        editor={editor}
-        className="
-          min-h-[120px]
-          p-3
-          text-sm
-          prose prose-sm max-w-none
-          focus:outline-none
-          outline-none
-          border-0
-          [&_*]:outline-none
+      <div className="max-h-[360px] overflow-y-auto">
+
+        <EditorContent
+          editor={editor}
+          className="
+        min-h-[120px]
+        p-3
+        text-sm
+        prose prose-sm max-w-none
+        focus:outline-none
+        outline-none
+        border-0
+        [&_*]:outline-none
         "
-      />
+        />
+      </div>
     </div>
   );
 };

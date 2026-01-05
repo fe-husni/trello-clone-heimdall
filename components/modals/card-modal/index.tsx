@@ -27,35 +27,49 @@ export const CardModal = () => {
   });
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={onClose}
-    >
-      <DialogContent className="">
-        {!cardData
-          ? <Header.Skeleton />
-          : <Header data={cardData} />
-        }
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent
+        className="
+          max-h-[90vh]
+          h-[90vh]
+          p-0
+          overflow-hidden
+        "
+      >
+        {/* 🔥 SATU-SATUNYA SCROLL CONTAINER */}
+        <div className="h-full overflow-y-auto">
+          <div className="p-6">
 
-        <div className="grid grid-cols-1 md:grid-cols-4 md:gap-4">
-          <div className="col-span-3">
-            <div className="w-full space-y-6">
+            {!cardData
+              ? <Header.Skeleton />
+              : <Header data={cardData} />
+            }
+
+            <div className="grid grid-cols-1 md:grid-cols-4 md:gap-4 mt-4">
+              <div className="col-span-3">
+                <div className="w-full space-y-6">
+                  {!cardData
+                    ? <Description.Skeleton />
+                    : <Description data={cardData} />
+                  }
+
+                  {!auditLogsData
+                    ? <Activity.Skeleton />
+                    : <Activity items={auditLogsData} />
+                  }
+                </div>
+              </div>
+
+              {/* 👉 Actions ikut scroll (sesuai Trello) */}
               {!cardData
-                ? <Description.Skeleton />
-                : <Description data={cardData} />
-              }
-              {!auditLogsData
-                ? <Activity.Skeleton />
-                : <Activity items={auditLogsData} />
+                ? <Actions.Skeleton />
+                : <Actions data={cardData} />
               }
             </div>
+
           </div>
-          {!cardData
-            ? <Actions.Skeleton/>
-            : <Actions data={cardData}/>
-          }
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -64,7 +64,7 @@ export const Header = ({
   }
 
   return (
-    <div className="flex items-start gap-x-3 mb-6 w-full">
+    <div className="flex items-start gap-x-3 mb-6 w-full sticky top-0 z-10 bg-white py-4">
       <Layout className="h-5 w-5 mt-1 text-neutral-700" />
       <div className="w-full">
         <form action={onSubmit}>

@@ -22,8 +22,7 @@ export async function GET (
       },
       orderBy: {
         createdAt: "desc",
-      },
-      take: 3,
+      } //note kalau mau dilimit tambahi property take: xxx,
     });
 
     return NextResponse.json(auditLogs);

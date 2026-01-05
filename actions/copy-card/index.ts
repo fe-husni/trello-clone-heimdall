@@ -9,6 +9,8 @@ import { CopyCard } from "./schema";
 import { redirect } from "next/navigation";
 import { orderBy } from "lodash";
 import { error } from "console";
+import { createAuditLog } from "@/lib/create-audit-log";
+import { ACTION, ENTITY_TYPE } from "@prisma/client";
 
 const handler = async (data: InputType) => {
   const { userId, orgId } = await auth();
@@ -50,8 +52,15 @@ const handler = async (data: InputType) => {
         description: cardToCopy.description,
         order: newOrder,
         listId: cardToCopy.listId,
-      }
-    })
+      },
+    });
+
+    await createAuditLog({
+      entityTitle: card.title,
+      entityId: card.id,
+      entityType: ENTITY_TYPE.CARD,
+      action: ACTION.CREATE,
+    });
 
   } catch (error) {
     console.error(error);

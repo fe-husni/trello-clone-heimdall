@@ -8,6 +8,8 @@ import { createSafeAction } from "@/lib/create-safe-action";
 import { CopyList } from "./schema";
 import { redirect } from "next/navigation";
 import { orderBy } from "lodash";
+import { createAuditLog } from "@/lib/create-audit-log";
+import { ACTION, ENTITY_TYPE } from "@prisma/client";
 
 const handler = async (data: InputType) => {
   const { userId, orgId } = await auth();
@@ -61,6 +63,13 @@ const handler = async (data: InputType) => {
       include: {
         cards: true,
       },
+    });
+
+    await createAuditLog({
+      entityTitle: list.title,
+      entityId: list.id,
+      entityType: ENTITY_TYPE.LIST,
+      action: ACTION.CREATE,
     });
 
   } catch (error) {

@@ -31,11 +31,11 @@ export const RichTextEditor = ({
   onChange,
 }: RichTextEditorProps) => {
   const editor = useEditor({
-    immediatelyRender: false, // ✅ FIX SSR
+    immediatelyRender: false, 
     extensions: [
       StarterKit.configure({
         heading: {
-          levels: [1, 2, 3, 4], // ✅ H1–H4 saja
+          levels: [1, 2, 3, 4],
         },
       }),
       Link.configure({

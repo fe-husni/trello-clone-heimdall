@@ -38,7 +38,7 @@ const BoardIdPage = async ({
   });
 
   return (
-    <div className="p-4 w-full overflow-x-auto no-scrollbar scroll-smooth">
+    <div className="p-4 w-full overflow-x-auto min-h-[87vh] scroll-smooth">
       <ListContainer
         boardId={params.boardId}
         data={lists}

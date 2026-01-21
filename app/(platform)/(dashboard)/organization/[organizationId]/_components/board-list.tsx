@@ -1,27 +1,23 @@
-import { auth } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
-import { FormPopover } from "@/components/form/form-popover";
-import { Hint } from "@/components/hint"
-import { HelpCircle, SquarePlus, User2 } from "lucide-react"
-import { redirect } from "next/navigation";
+"use client";
+
+import useSWR from "swr";
 import Link from "next/link";
+import { User2, SquarePlus, HelpCircle } from "lucide-react";
+import { FormPopover } from "@/components/form/form-popover";
+import { Hint } from "@/components/hint";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const BoardList = async() => {
-  const {orgId} = await auth();
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-  if (!orgId) {
-    return redirect("/select-org");
-  }
-
-  const boards = await db.board.findMany({
-    where: {
-      orgId,
-    },
-    orderBy: {
-      createdAt: "desc"
-    }
+export function BoardList() {
+  const { data: boards, isLoading, error } = useSWR("/api/boards", fetcher, {
+    refreshInterval: 2000, //refresh every 2 seconds
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
   });
+
+  if (isLoading) return <BoardListSkeleton />;
+  if (error) return <div>Gagal load boards</div>;
 
   return (
     <div className="space-y-4">
@@ -29,18 +25,17 @@ export const BoardList = async() => {
         <User2 className="h-6 w-6 mr-2" />
         Your Boards
       </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {boards.map((board) => (
+        {(boards ?? []).map((board: any) => (
           <Link
             key={board.id}
             href={`/board/${board.id}`}
-            style={{backgroundImage: `url(${board.imageThumbUrl})`}}
+            style={{ backgroundImage: `url(${board.imageThumbUrl})` }}
             className="group relative aspect-video bg-no-repeat bg-center bg-cover bg-sky-700 rounded-sm h-full w-full p-2 overflow-hidden"
           >
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition"/>
-            <p className="relative font-semibold text-white">
-              {board.title}
-            </p>
+            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition" />
+            <p className="relative font-semibold text-white">{board.title}</p>
           </Link>
         ))}
 
@@ -51,31 +46,23 @@ export const BoardList = async() => {
             <span className="text-xs">5 remaining</span>
             <Hint
               sideOffset={40}
-              description={`
-              Free Workspaces can have up to 5 open boards. For unlimited boards upgrade this workspace.
-              `}
+              description="Free Workspaces can have up to 5 open boards. For unlimited boards upgrade this workspace."
             >
               <HelpCircle className="absolute bottom-2 right-2 h-[14px] w-[14px]" />
             </Hint>
           </div>
         </FormPopover>
-
       </div>
     </div>
   );
-};
+}
 
-BoardList.Skeleton = function SkeletonBoardList() {
+export function BoardListSkeleton() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-      <Skeleton className="aspect-video h-full w-full p-2"></Skeleton>
-      <Skeleton className="aspect-video h-full w-full p-2"></Skeleton>
-      <Skeleton className="aspect-video h-full w-full p-2"></Skeleton>
-      <Skeleton className="aspect-video h-full w-full p-2"></Skeleton>
-      <Skeleton className="aspect-video h-full w-full p-2"></Skeleton>
-      <Skeleton className="aspect-video h-full w-full p-2"></Skeleton>
-      <Skeleton className="aspect-video h-full w-full p-2"></Skeleton>
-      <Skeleton className="aspect-video h-full w-full p-2"></Skeleton>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Skeleton key={i} className="aspect-video h-full w-full p-2" />
+      ))}
     </div>
   );
-};
+}

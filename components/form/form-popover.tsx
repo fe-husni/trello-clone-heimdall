@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+import { useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
 import React, { ElementRef, useRef } from "react";
 import { X } from "lucide-react";
@@ -32,11 +33,14 @@ export const FormPopover = ({
   sideOffset = 0
 }: FormPopoverProps) => {
   const router = useRouter();
+  const { mutate } = useSWRConfig();
   const closeRef = useRef<ElementRef<"button">>(null);
 
   const { execute, fieldErrors } = useAction(createBoard, {
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success("Board Created!");
+
+      await mutate("/api/boards");
       closeRef.current?.click();
       router.push(`/board/${data.id}`);
     },

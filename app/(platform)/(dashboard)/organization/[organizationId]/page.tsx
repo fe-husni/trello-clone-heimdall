@@ -2,7 +2,9 @@ import { db } from "@/lib/db";
 import { Info } from "./_components/info";
 import { Separator } from "@/components/ui/separator";
 import { BoardList } from "./_components/board-list";
+import { BoardListSkeleton } from "./_components/board-list";
 import { Suspense } from "react";
+
 
 export const runtime = "nodejs";
 
@@ -16,7 +18,7 @@ const OrganizationIdPage = async () => {
       <Info />
       <Separator />
       <div className="px-2 md:px-4">
-        <Suspense fallback={<BoardList.Skeleton/>}>
+        <Suspense fallback={<BoardListSkeleton />}>
           <BoardList />
         </Suspense>
       </div>

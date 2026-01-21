@@ -1,51 +1,43 @@
-import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { unstable_noStore as noStore } from "next/cache";
+import { db } from "@/lib/db";
+
+import { BoardNavbar } from "./_components/board-navbar";
 import { ListContainer } from "./_components/list-container";
 
-interface BoardIdPageProps {
-  params: {
-    boardId: string;
-  };
-};
-
-const BoardIdPage = async ({
+export default async function BoardPage({
   params,
-}: BoardIdPageProps) => {
-  const { orgId } = await auth();
+}: {
+  params: { boardId: string };
+}) {
+  noStore();
 
-  if (!orgId) {
-    redirect("/select-org");
-  }
+  const { orgId } = await auth();
+  if (!orgId) redirect("/select-org"); // sesuaikan
+
+  const board = await db.board.findFirst({
+    where: { id: params.boardId, orgId },
+  });
+  if (!board) redirect(`/organization/${orgId}`);
 
   const lists = await db.list.findMany({
     where: {
       boardId: params.boardId,
-      board: {
-        orgId,
-      },
+      board: { orgId },
     },
     include: {
-      cards: {
-        orderBy: {
-          order: "asc",
-        },
-      },
+      cards: { orderBy: { order: "asc" } },
     },
-    orderBy: {
-      order: "asc",
-    },
+    orderBy: { order: "asc" },
   });
 
   return (
-    <div className="p-4 w-full overflow-x-auto min-h-[87vh] scroll-smooth">
-      <ListContainer
-        boardId={params.boardId}
-        data={lists}
-      >
-      </ListContainer>
-    </div>
+    <>
+      <BoardNavbar data={board} />
+      <div className="pt-24 px-6">
+        <ListContainer boardId={params.boardId} data={lists} />
+      </div>
+    </>
   );
-};
-
-export default BoardIdPage;
+}

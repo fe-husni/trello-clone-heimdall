@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { error } from "console";
 import { ElementRef, useRef } from "react";
 import { copyList } from "@/actions/copy-list";
+import { useSWRConfig } from "swr";
 
 interface ListOptionsProps {
   data: List;
@@ -28,10 +29,13 @@ export const ListOptions = ({
   onAddCard
 }: ListOptionsProps) => {
   const closeRef = useRef<ElementRef<"button">>(null);
+  const {mutate} = useSWRConfig();
 
   const {execute: executeDelete} = useAction(deleteList, {
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success(`List "${data.title}" deleted`);
+
+      await mutate(`/api/boards/${data.boardId}/lists`);
       closeRef.current?.click();
     },
     onError: (error) => {

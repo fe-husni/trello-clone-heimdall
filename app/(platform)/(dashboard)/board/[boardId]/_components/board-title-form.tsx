@@ -10,6 +10,7 @@ import { updateBoard } from "@/actions/update-board";
 import { toast } from "sonner";
 import { error } from "console";
 
+
 interface BoardTitleFormProps {
   data: Board;
 }

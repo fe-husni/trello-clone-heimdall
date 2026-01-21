@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { error } from "console";
+import { useSWRConfig } from "swr";
 
 export const ListForm = () => {
   const router = useRouter();
@@ -23,6 +24,7 @@ export const ListForm = () => {
   const inputRef = useRef<ElementRef<"input">>(null);
   
   const [isEditing, setIsEditing] = useState(false);
+  const {mutate} = useSWRConfig();
 
   const enableEditing = () => {
     setIsEditing(true);
@@ -36,10 +38,13 @@ export const ListForm = () => {
   };
 
   const { execute, fieldErrors } = useAction(createList, {
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success(`List "${data.title}" created`);
+
+      await mutate(`/api/boards/${params.boardId}/lists`);
+
       disableEditing();
-      router.refresh();
+      // router.refresh();
     },
     onError: (error) => {
       toast.error(error);
